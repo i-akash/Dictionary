@@ -7,6 +7,7 @@
 #include<queue>
 #include<sstream>
 #include<string.h>
+#include<thread>
 
 class Dictionary
 {
@@ -26,6 +27,7 @@ class Dictionary
         std::vector<std::pair<std::string,std::string>> traverse(Dictionary *start);
         void saveDictionary();
         void loadDictionary();
+        void firstRead();
         ~Dictionary();
 };
 
@@ -90,7 +92,7 @@ int Dictionary::possiblitiesInThisWay(const char * query){
 }
 
 
-std::vector<std::pair<std::string,std::string> > Dictionary::autoCompletion(const char *query){
+std::vector<std::pair<std::string,std::string>> Dictionary::autoCompletion(const char *query){
     Dictionary *rootIterator=this;
     std::vector<std::pair<std::string,std::string>> result;
 
@@ -124,6 +126,7 @@ std::vector< std::pair <std::string,std::string> > Dictionary::traverse(Dictiona
                     if(curr->children[child])
                         dfs.push({curr->children[child],currString+cl});
             }
+
         if(curr->isEnd){
             result.push_back({currString,std::string(curr->meaning)});
         }
@@ -190,54 +193,72 @@ void Dictionary::loadDictionary(){
     
 }
 
+void Dictionary::firstRead(){
+    std::ifstream input("dictionary.txt");
+    std::string line;
+
+    while(getline(input,line))
+    {
+        std::vector<std::string> brokenwords;
+        char *charline=(char *)line.c_str();
+        char *word;
+        
+        word=strtok(charline,"$");
+        
+        while (word!=NULL)
+        {
+            brokenwords.push_back(std::string(word));
+            word=strtok(NULL,"$");
+        }
+        
+        int length=brokenwords.size();
+        const char* dword=brokenwords[0].c_str();
+        const char* mean=brokenwords[length-1].c_str();
+        insert(dword,mean);
+           
+    }
+    saveDictionary();
+}
+
 Dictionary::~Dictionary()
 {
+    
 
 }
 
 
-int main(int argc, char const *argv[])
-{
-    
-    Dictionary dictionary;
 
 
 
-    // std::ifstream input("dictionary.txt");
-    // std::string line;
-    // while(getline(input,line))
-    // {
-    //     std::vector<std::string> brokenwords;
-    //     char *charline=(char *)line.c_str();
-    //     char *word;
-        
-    //     word=strtok(charline,"$");
-        
-    //     while (word!=NULL)
-    //     {
-    //         brokenwords.push_back(std::string(word));
-    //         word=strtok(NULL,"$");
-    //     }
-        
-    //     int length=brokenwords.size();
-    //     const char* dword=brokenwords[0].c_str();
-    //     const char* mean=brokenwords[length-1].c_str();
-    //     dictionary.insert(dword,mean);
-           
-    // }
+// controlling
 
-    // dictionary.saveDictionary();
-    
+Dictionary dictionary;
+
+void loadAsync(){
     dictionary.loadDictionary();
-    
-    if(argc<2)return 0;
-    
-    int possiblities=dictionary.possiblitiesInThisWay(argv[1]);
-    std::cout<<possiblities<<"\n";
-    std::vector<std::pair<std::string,std::string>> results=dictionary.autoCompletion(argv[1]);
-    for(std::pair<std::string,std::string> word:results)
-        std::cout<<argv[1]+word.first<<"--> "<<word.second<<"\n\n";
+}
 
 
+int main(int argc, char const *argv[])
+{    
+    std::thread task(std::move(loadAsync));
+    std::string word;
+    std::cout<<"please enter your word..\n";
+    std::cin>>word;
+    task.join();
+
+    while (1)
+    {
+        int possiblities=dictionary.possiblitiesInThisWay(word.c_str());
+        std::cout<<possiblities<<"\n";
+        
+        std::vector<std::pair<std::string,std::string>> results=dictionary.autoCompletion(word.c_str());
+        for(std::pair<std::string,std::string> result:results)
+            std::cout<<"[ "<<word+result.first<<" ] --> "<<result.second<<"\n\n";
+        
+        std::cout<<"\n\n---------------[]-------------------------\n\nplease enter your word..\n";
+        
+        std::cin>>word;    
+    }
     return 0;
 }
