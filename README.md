@@ -2,7 +2,8 @@
     a simple terminal dictionary for rapid auto completion,search and meaning ..
 
 # Extended Dictionary
-    A dictionary with more functionality [click here](https://github.com/i-akash/extended-dictionary)
+    A dictionary with more functionality 
+   * [extended dictionary](https://github.com/i-akash/extended-dictionary)
 
 # usage
     g++ dictionary.cpp -lpthread -o a.out && ./a.out
